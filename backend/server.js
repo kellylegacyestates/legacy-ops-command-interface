@@ -14,22 +14,64 @@ import { WebSocketServer, WebSocket } from 'ws';
 const app = express();
 app.use(express.json({limit: process?.env?.API_PAYLOAD_MAX_SIZE || "7mb"}));
 
-const PORT = process?.env?.API_BACKEND_PORT || 5000;
-const API_BACKEND_HOST = process?.env?.API_BACKEND_HOST || "127.0.0.1";
+// CORS configuration for local development and configured frontend origin.
+// Honor either CORS_ORIGIN or legacy FRONTEND_ORIGIN env var (default: http://localhost:5173)
+const FRONTEND_ORIGIN = process?.env?.CORS_ORIGIN || process?.env?.FRONTEND_ORIGIN || 'http://localhost:5173';
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    FRONTEND_ORIGIN,
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
+  ];
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-App-Proxy');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
-const GOOGLE_CLOUD_LOCATION = process?.env?.GOOGLE_CLOUD_LOCATION;
-const GOOGLE_CLOUD_PROJECT = process?.env?.GOOGLE_CLOUD_PROJECT;
-if (!GOOGLE_CLOUD_PROJECT || !GOOGLE_CLOUD_LOCATION) {
-  console.error("Error: Environment variables GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION must be set.");
-  process.exit(1);
-}
-const PROXY_HEADER = process?.env?.PROXY_HEADER;
-if (!PROXY_HEADER) {
-  console.error("Error: Environment variables PROXY_HEADER must be set.");
-  process.exit(1);
+const PORT = parseInt(process?.env?.API_BACKEND_PORT || '5000', 10) || 5000;
+const API_BACKEND_HOST = process?.env?.API_BACKEND_HOST || '127.0.0.1';
+
+const GOOGLE_CLOUD_LOCATION = process?.env?.GOOGLE_CLOUD_LOCATION?.trim();
+const GOOGLE_CLOUD_PROJECT = process?.env?.GOOGLE_CLOUD_PROJECT?.trim();
+const PROXY_HEADER = process?.env?.PROXY_HEADER?.trim();
+
+const missingGoogleCloudEnvVars = [];
+if (!GOOGLE_CLOUD_PROJECT) missingGoogleCloudEnvVars.push('GOOGLE_CLOUD_PROJECT');
+if (!GOOGLE_CLOUD_LOCATION) missingGoogleCloudEnvVars.push('GOOGLE_CLOUD_LOCATION');
+const missingProxyHeader = !PROXY_HEADER;
+const vertexProxyEnabled = missingGoogleCloudEnvVars.length === 0 && !missingProxyHeader;
+
+if (!vertexProxyEnabled) {
+  console.warn('========================================');
+  console.warn('Vertex AI proxy is disabled for local development.');
+  if (missingGoogleCloudEnvVars.length > 0) {
+    console.warn(`Missing required Google Cloud environment variables: ${missingGoogleCloudEnvVars.join(', ')}`);
+  }
+  if (missingProxyHeader) {
+    console.warn('Missing required backend environment variable: PROXY_HEADER');
+  }
+  console.warn('The backend will still start, but /api-proxy and /ws-proxy routes are unavailable until these are configured in backend/.env.local.');
+  console.warn('See backend/.env.example for the exact values to set.');
+  console.warn('========================================');
 }
 
 app.set('trust proxy', 1 /* number of proxies between user and server */);
+
+app.get('/status', (req, res) => {
+  return res.json({
+    status: 'ok',
+    aiProxyEnabled: vertexProxyEnabled,
+    missingEnvVars: missingGoogleCloudEnvVars.concat(missingProxyHeader ? ['PROXY_HEADER'] : []),
+  });
+});
 
 // IMPORTANT: Vertex AI Studio Rate Limiting
 // This rate limiting configuration protects your backend APIs from abuse.
@@ -184,6 +226,12 @@ function getRequestHeaders(accessToken) {
 
 // --- Proxy Endpoint ---
 app.post('/api-proxy', async (req, res) => {
+  if (!vertexProxyEnabled) {
+    return res.status(503).json({
+      error: 'Vertex AI proxy disabled',
+      message: 'Set GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, and PROXY_HEADER in backend/.env.local to enable /api-proxy.',
+    });
+  }
 
   // Check for the custom header added by the shim
   if (req.headers['x-app-proxy'] !== PROXY_HEADER) {
@@ -334,6 +382,11 @@ server.on('upgrade', async (request, socket, head) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
 
   if (url.pathname === '/ws-proxy') {
+    if (!vertexProxyEnabled) {
+      socket.write('HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/plain\r\nContent-Length: 90\r\n\r\nVertex AI WebSocket proxy is disabled. Configure backend/.env.local and restart the backend.');
+      socket.destroy();
+      return;
+    }
     
     let targetUrl = url.searchParams.get('target');
     if (!targetUrl) {
