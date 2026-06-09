@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "site": "legacy-ai-production",
     "public": "frontend/dist",
     "ignore": [
       "firebase.json",
@@ -11,26 +10,6 @@
       {
         "source": "**",
         "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*.@(js|css|json|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=31536000"
-          }
-        ]
-      },
-      {
-        "source": "/index.html",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=3600"
-          }
-        ]
       }
     ]
   }
