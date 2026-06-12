@@ -1,124 +1,62 @@
-import React, { useState } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LandingPage } from './components/LandingPage';
-import { CommandLayout } from './components/CommandLayout';
-import { AgentWorkspace } from './components/AgentWorkspace';
-import { DomainCards } from './components/DomainCards';
-import { ReportBuilder } from './components/ReportBuilder';
-import { SettingsPage } from './components/SettingsPage';
-import { IntakeForm } from './components/IntakeForm';
-import { AdminPanel } from './components/AdminPanel';
-import { DomainPage } from './components/DomainPage';
-import DocumentIntelligence from './components/DocumentIntelligence';
-import { DOMAINS } from './constants';
+import { useState } from "react";
 
-const App: React.FC = () => {
-  const [showDocumentIntelligence, setShowDocumentIntelligence] = useState(false);
+export default function App() {
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  if (showDocumentIntelligence) {
-    return (
-      <div style={{ height: '100vh', overflow: 'hidden' }}>
-        <DocumentIntelligence />
-        <button
-          onClick={() => setShowDocumentIntelligence(false)}
-          style={{
-            position: 'fixed',
-            top: '16px',
-            right: '16px',
-            padding: '8px 16px',
-            background: '#2C3E50',
-            color: '#F5F0E8',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: 'system-ui, sans-serif',
-            fontSize: '12px',
-            fontWeight: '700',
-            borderRadius: '2px',
-            zIndex: 1000,
-          }}
-        >
-          ✕ Close Engine
-        </button>
-      </div>
-    );
+  async function runPromptForge() {
+    setLoading(true);
+    setOutput("");
+
+    try {
+      const res = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ role: "user", content: input }] })
+      });
+
+      const data = await res.json();
+      setOutput(data.output || data.detail || "No response returned.");
+    } catch {
+      setOutput("PromptForge connection failed.");
+    }
+
+    setLoading(false);
   }
 
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/intake" element={<IntakeForm />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        
-        <Route element={<CommandLayout />}>
-          <Route path="/command" element={<AgentWorkspace />} />
-          <Route path="/dashboard" element={<DashboardWithEngine onOpenEngine={() => setShowDocumentIntelligence(true)} />} />
-          <Route path="/reports" element={<ReportBuilder />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          
-          {/* Dynamic Domain Routes */}
-          {DOMAINS.map(domain => (
-            <Route 
-              key={domain.id} 
-              path={domain.path} 
-              element={<DomainPage domain={domain} />} 
-            />
-          ))}
-        </Route>
+    <main className="min-h-screen bg-[#080A0F] text-white px-6 py-8">
+      <section className="mx-auto max-w-5xl">
+        <p className="text-sm tracking-[0.35em] text-cyan-400 uppercase">Legacy Access™</p>
+        <h1 className="mt-4 text-4xl md:text-6xl font-bold">PromptForge Command Interface</h1>
+        <p className="mt-4 text-slate-300 max-w-2xl">
+          Internal AI drafting and prompt infrastructure for Kelly Legacy Estates.
+        </p>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </HashRouter>
+        <div className="mt-10 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+          <textarea
+            className="w-full min-h-40 rounded-xl bg-black border border-slate-700 p-4 text-white"
+            placeholder="Enter your prompt..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+
+          <button
+            onClick={runPromptForge}
+            disabled={loading || !input.trim()}
+            className="mt-4 rounded-xl bg-cyan-600 px-5 py-3 font-semibold disabled:opacity-50"
+          >
+            {loading ? "Running..." : "Run PromptForge"}
+          </button>
+
+          {output && (
+            <div className="mt-6 whitespace-pre-wrap rounded-xl border border-slate-800 bg-black p-4 text-slate-100">
+              {output}
+            </div>
+          )}
+        </div>
+      </section>
+    </main>
   );
-};
-
-interface DashboardWithEngineProps {
-  onOpenEngine: () => void;
 }
-
-const DashboardWithEngine: React.FC<DashboardWithEngineProps> = ({ onOpenEngine }) => {
-  return (
-    <div className="p-8 h-full overflow-y-auto bg-obsidian">
-      <div className="mb-8">
-        <h1 className="text-2xl font-mono text-platinum tracking-tight">Intelligence Domains</h1>
-        <p className="text-sm text-zinc-500 mt-2 font-mono">Select a domain to initiate a targeted operational review.</p>
-      </div>
-
-      {/* Document Intelligence Engine Card */}
-      <div className="mb-8">
-        <button
-          onClick={onOpenEngine}
-          className="w-full bg-gradient-to-r from-cyan-900 to-cyan-800 border-2 border-cyan-700 p-6 hover:from-cyan-800 hover:to-cyan-700 hover:border-cyan-600 transition-all group cursor-pointer text-left"
-        >
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-mono text-sm text-cyan-100 uppercase tracking-wider pr-4 font-bold">
-              Legacy Document Intelligence Engine™
-            </h3>
-            <span className="text-xs font-mono text-cyan-300 bg-cyan-900 px-2 py-1 rounded">NEW</span>
-          </div>
-          
-          <p className="text-xs text-cyan-50 leading-relaxed mb-6">
-            Build structured records from scattered documents, timelines, facts, assumptions, and missing information. Organize, classify, and generate comprehensive record reports.
-          </p>
-          
-          <div className="mt-auto pt-4 border-t border-cyan-700 flex justify-between items-center">
-            <span className="text-[10px] font-mono text-cyan-300">
-              6 Active Tabs
-            </span>
-            <button className="text-[10px] font-mono text-cyan-100 hover:text-cyan-50 uppercase tracking-wider opacity-100 transition-opacity">
-              Open Engine →
-            </button>
-          </div>
-        </button>
-      </div>
-
-      {/* Existing Domain Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <DomainCards />
-      </div>
-    </div>
-  );
-};
-
-export default App;

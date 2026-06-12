@@ -8,9 +8,17 @@
     ],
     "rewrites": [
       {
+        "source": "/api/claude",
+        "function": "claude"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
   }
 }
