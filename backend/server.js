@@ -4,7 +4,8 @@
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
  */
-import 'dotenv/config';
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local", override: true });
 import express from 'express';
 import claudeRoute from "./routes/claude.js";
 import { GoogleAuth } from 'google-auth-library';

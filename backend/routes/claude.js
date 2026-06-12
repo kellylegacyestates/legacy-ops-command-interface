@@ -1,37 +1,25 @@
 import express from "express";
+import OpenAI from "openai";
 
 const router = express.Router();
 
 router.post("/claude", async (req, res) => {
   try {
-    const { messages, systemPrompt } = req.body;
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5",
-        max_tokens: 1500,
-        system: systemPrompt || "You are PromptForge Pro inside Legacy Access.",
-        messages
-      })
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
     });
 
-    const data = await response.json();
+    const response = await client.models.list();
 
     res.json({
-      output: data.content?.map((x) => x.text).join("") || "",
-      raw: data
+      output: `PromptForge connected. Models available: ${response.data.length}`
     });
   } catch (error) {
-    console.error("PromptForge error:", error);
-    res.status(500).json({ error: "PromptForge failed" });
+    res.status(500).json({
+      error: "PromptForge failed",
+      detail: error.message
+    });
   }
 });
 
 export default router;
-
