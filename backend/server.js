@@ -6,6 +6,7 @@
  */
 import 'dotenv/config';
 import express from 'express';
+import claudeRoute from "./routes/claude.js";
 import { GoogleAuth } from 'google-auth-library';
 import fetch from 'node-fetch';
 import rateLimit from 'express-rate-limit';
@@ -87,6 +88,7 @@ const proxyLimiter = rateLimit({
     },
 });
 // Apply the rate limiter to the /api-proxy route before the main proxy logic
+app.use("/api", claudeRoute);
 app.use('/api-proxy', proxyLimiter);
 
 const API_CLIENT_MAP = [
