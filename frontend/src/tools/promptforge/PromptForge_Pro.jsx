@@ -4,7 +4,7 @@ const CATEGORIES = [
   "Business Strategy", "Marketing Campaigns", "Sales Funnels", "Content Creation",
   "AI Agents", "Automation Workflows", "Product Creation", "Digital Courses",
   "Legal/Admin Document Organization", "Research Systems", "Personal Productivity",
-  "Branding", "Software Development", "Customer Service", "Operations"
+  "Branding", "System Architecture", "Member Support", "Governance"
 ];
 
 const EXPERTISE = ["Practitioner", "Senior Specialist", "Director", "C-Suite Executive", "World-Class Expert"];
@@ -18,30 +18,30 @@ const VERSION_META = {
 };
 
 const COMMANDS = [
-  { cmd: "/build", desc: "Create a new production prompt from intake" },
-  { cmd: "/improve", desc: "Upgrade an existing prompt you paste in" },
-  { cmd: "/audit", desc: "Score and diagnose prompt quality (1–100)" },
-  { cmd: "/monetize", desc: "Convert idea into revenue workflow prompt" },
-  { cmd: "/agent", desc: "Create a specialized AI agent prompt" },
-  { cmd: "/system", desc: "Build a full operating system prompt" },
+  { cmd: "/build", desc: "Create a new production record from intake" },
+  { cmd: "/improve", desc: "Upgrade an existing record you paste in" },
+  { cmd: "/audit", desc: "Score and diagnose record quality (1–100)" },
+  { cmd: "/monetize", desc: "Convert idea into revenue workflow record" },
+  { cmd: "/agent", desc: "Create a specialized AI agent record" },
+  { cmd: "/system", desc: "Build a full operating system record" },
 ];
 
-async function callClaude(messages, systemPrompt) {
+async function callClaude(messages, systemRecord) {
   const res = await fetch("/api/claude", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, systemPrompt }),
+    body: JSON.stringify({ messages, systemRecord }),
   });
 
   if (!res.ok) {
-    throw new Error("PromptForge API request failed");
+    throw new Error("Legacy Intelligence API request failed");
   }
 
   const data = await res.json();
   return data.output || "";
 }
 
-function buildEnginePrompt(intake, version, command = "/build") {
+function buildEngineRecord(intake, version, command = "/build") {
   const versionInstructions = {
     fast: "Generate a FAST version: tight, direct, deployment-ready. 150–250 words. No preamble. No filler.",
     professional: "Generate a PROFESSIONAL version: full role assignment, structured steps, output spec, one self-review loop. 300–450 words.",
@@ -50,15 +50,15 @@ function buildEnginePrompt(intake, version, command = "/build") {
   };
 
   const commandContext = {
-    "/build": "Build a production-ready prompt from the user's intake data.",
-    "/improve": "Upgrade and strengthen the existing prompt provided. Identify weaknesses, then rewrite it to a higher standard.",
-    "/audit": "Perform a structured audit of the prompt. Score it 1–100 across six dimensions. Identify weaknesses. Provide specific improvement recommendations.",
-    "/monetize": "Frame this as a revenue-generating workflow. Assign expert identity, define the value proposition, and build a prompt that produces a monetizable deliverable.",
-    "/agent": "Create a complete AI agent prompt: persistent identity, memory instructions, decision logic, escalation rules, and output protocol.",
-    "/system": "Build a full operating system prompt: master identity, domain knowledge loading, workflow sequencing, output standards, and maintenance instructions.",
+    "/build": "Build a production-ready record from the user's intake data.",
+    "/improve": "Upgrade and strengthen the existing record provided. Identify weaknesses, then rewrite it to a higher standard.",
+    "/audit": "Perform a structured audit of the record. Score it 1–100 across six dimensions. Identify weaknesses. Provide specific improvement recommendations.",
+    "/monetize": "Frame this as a revenue-generating workflow. Assign expert identity, define the value proposition, and build a record that produces a monetizable deliverable.",
+    "/agent": "Create a complete AI agent record: persistent identity, memory instructions, decision logic, escalation rules, and output protocol.",
+    "/system": "Build a full operating system record: master identity, domain knowledge loading, workflow sequencing, output standards, and maintenance instructions.",
   };
 
-  return `You are PromptForge Pro™ — an elite prompt engineering engine developed by the Kelly Legacy Institute, Office of the Fiduciary. You operate with institutional rigor, executive precision, and zero tolerance for vague, generic, or low-leverage output.
+  return `You are Legacy Intelligence Pro™ — an elite record engineering engine developed by the Kelly Legacy Institute, Office of the Fiduciary. You operate with institutional rigor, executive precision, and zero tolerance for vague, generic, or low-leverage output.
 
 COMMAND CONTEXT: ${commandContext[command] || commandContext["/build"]}
 
@@ -74,7 +74,7 @@ USER INTAKE:
 - Mistakes to Avoid: ${intake.mistakes || "Not specified"}
 - Category: ${intake.category || "General"}
 
-YOUR TASK: Generate the requested prompt using this exact architecture:
+YOUR TASK: Generate the requested record using this exact architecture:
 
 ROLE — Assign the highest-value expert identity for this objective.
 MISSION — Define the precise objective with zero ambiguity.
@@ -84,7 +84,7 @@ CONSTRAINTS — Quality controls, limitations, and guardrails.
 OUTPUT — Exact format, structure, and deliverable specification.
 OPTIMIZATION — One self-review instruction at the end.
 
-After the prompt, add a PROMPT SCORECARD section.
+After the record, add a PROMPT SCORECARD section.
 Score each of these six dimensions 1–10:
 Role Clarity, Mission Precision, Context Depth, Process Structure, Constraint Rigor, Output Specificity.
 
@@ -94,7 +94,7 @@ One STRENGTH statement.
 One WEAKNESS statement.
 One IMPROVEMENT recommendation.
 
-Do not add preamble. Start with the prompt label:
+Do not add preamble. Start with the record label:
 [PROMPTFORGE PRO™ — ${version.toUpperCase()} VERSION]
 
 End with the scorecard. Nothing else.`;
@@ -142,7 +142,7 @@ function ScoreRing({ score }) {
         <div style={{ color, fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>
           {score >= 85 ? "ELITE" : score >= 70 ? "STRONG" : score >= 55 ? "MODERATE" : "WEAK"}
         </div>
-        <div style={{ color: "#8A8FA0", fontSize: 11 }}>Prompt Score</div>
+        <div style={{ color: "#8A8FA0", fontSize: 11 }}>Record Score</div>
       </div>
     </div>
   );
@@ -218,7 +218,7 @@ function Field({ label, hint, value, onChange, type = "text", options, rows }) {
   );
 }
 
-export default function PromptForgePro() {
+export default function Legacy IntelligencePro() {
   const [phase, setPhase] = useState("home");
   const [activeCmd, setActiveCmd] = useState("/build");
   const [activeVersion, setActiveVersion] = useState("professional");
@@ -256,14 +256,14 @@ export default function PromptForgePro() {
     for (const version of VERSIONS) {
       setActiveVersion(version);
 
-      const systemPrompt = buildEnginePrompt(intake, version, activeCmd);
+      const systemRecord = buildEngineRecord(intake, version, activeCmd);
       const userMsg =
         activeCmd === "/build"
-          ? "Generate the prompt now."
-          : `Here is the existing prompt or idea to process:\n\n${pasteInput}\n\nProcess it according to the command.`;
+          ? "Generate the record now."
+          : `Here is the existing record or idea to process:\n\n${pasteInput}\n\nProcess it according to the command.`;
 
       try {
-        const result = await callClaude([{ role: "user", content: userMsg }], systemPrompt);
+        const result = await callClaude([{ role: "user", content: userMsg }], systemRecord);
         setOutputs((prev) => ({ ...prev, [version]: result }));
       } catch (err) {
         setOutputs((prev) => ({
@@ -284,7 +284,7 @@ export default function PromptForgePro() {
       <div style={page}>
         <div style={{ width: "100%", maxWidth: 900, padding: "40px 24px 0", borderBottom: "1px solid #1E2330" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
-            <span style={brand}>PromptForge Pro™</span>
+            <span style={brand}>Legacy Intelligence Pro™</span>
             <span style={versionBadge}>v1.0</span>
           </div>
           <div style={subheader}>KELLY LEGACY INSTITUTE — OFFICE OF THE FIDUCIARY · AI SYSTEMS DIVISION</div>
@@ -292,14 +292,14 @@ export default function PromptForgePro() {
 
         <div style={{ maxWidth: 900, width: "100%", padding: "56px 24px 40px" }}>
           <div style={hero}>
-            Precision-Grade Prompts.
+            Precision-Grade Records.
             <br />
             <span style={{ color: "#F5A623" }}>Institutional-Quality Output.</span>
           </div>
 
           <div style={heroText}>
-            PromptForge Pro™ diagnoses your objective, assigns the correct expert identity, extracts missing context,
-            and builds production-ready prompts across four deployment tiers.
+            Legacy Intelligence Pro™ diagnoses your objective, assigns the correct expert identity, extracts missing context,
+            and builds production-ready records across four deployment tiers.
           </div>
 
           <div style={{ marginBottom: 32 }}>
@@ -353,7 +353,7 @@ export default function PromptForgePro() {
           <div style={label}>PHASE 1 — INTELLIGENCE INTAKE</div>
           <div style={sectionTitle}>Define Your Objective</div>
           <div style={{ color: "#8A8FA0", fontSize: 13, marginBottom: 32, lineHeight: 1.6 }}>
-            Answer precisely. The quality of the generated prompt is a direct function of the quality of this intake.
+            Answer precisely. The quality of the generated record is a direct function of the quality of this intake.
           </div>
 
           {activeCmd !== "/build" && (
@@ -369,7 +369,7 @@ export default function PromptForgePro() {
             </div>
           )}
 
-          <Field label="OUTCOME OBJECTIVE" hint="What result must this prompt produce? Be specific." value={intake.objective} onChange={setField("objective")} rows={3} />
+          <Field label="OUTCOME OBJECTIVE" hint="What result must this record produce? Be specific." value={intake.objective} onChange={setField("objective")} rows={3} />
           <Field label="TARGET AUDIENCE" hint="Who is the end user of the AI output?" value={intake.audience} onChange={setField("audience")} />
           <Field label="INDUSTRY / FIELD" hint="e.g. Real estate law, SaaS marketing, estate planning" value={intake.industry} onChange={setField("industry")} />
           <Field label="PROMPT CATEGORY" options={CATEGORIES} value={intake.category} onChange={setField("category")} />
@@ -410,7 +410,7 @@ export default function PromptForgePro() {
         <TopNav setPhase={setPhase} activeCmd={activeCmd} />
 
         <div style={label}>PHASE 3 — OUTPUT DELIVERY</div>
-        <div style={sectionTitle}>Generated Prompts</div>
+        <div style={sectionTitle}>Generated Records</div>
 
         {error && <div style={errorBox}>{error}</div>}
 
@@ -484,7 +484,7 @@ function TopNav({ setPhase, activeCmd, intakeOnly = false }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 36, flexWrap: "wrap" }}>
       <button onClick={() => setPhase("home")} style={navButton}>← HOME</button>
       {!intakeOnly && <button onClick={() => setPhase("intake")} style={navButton}>← INTAKE</button>}
-      <div style={{ fontFamily: "'Georgia',serif", color: "#F5A623", fontSize: 16, fontWeight: 700 }}>PromptForge Pro™</div>
+      <div style={{ fontFamily: "'Georgia',serif", color: "#F5A623", fontSize: 16, fontWeight: 700 }}>Legacy Intelligence Pro™</div>
       <div style={cmdPill}>{activeCmd}</div>
     </div>
   );
