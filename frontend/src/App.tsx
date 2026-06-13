@@ -88,7 +88,7 @@ const DashboardWithEngine: React.FC<DashboardWithEngineProps> = ({ onOpenEngine 
       {/* Document Intelligence Engine Card */}
       <div className="mb-8">
         <button
-          onClick={() => window.location.href = "/dashboard"}
+          onClick={onOpenEngine}
           className="w-full bg-gradient-to-r from-cyan-900 to-cyan-800 border-2 border-cyan-700 p-6 hover:from-cyan-800 hover:to-cyan-700 hover:border-cyan-600 transition-all group cursor-pointer text-left"
         >
           <div className="flex justify-between items-start mb-4">
